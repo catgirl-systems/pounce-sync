@@ -1,0 +1,7 @@
+.direnv
+.git
+_scratch
+*.db
+*.db-wal
+*.db-shm
+pounce-sync

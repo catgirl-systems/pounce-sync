@@ -1,0 +1,6 @@
+/_scratch/
+/pounce-sync
+*.db
+*.db-wal
+*.db-shm
+.direnv/
