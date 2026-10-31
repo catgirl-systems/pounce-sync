@@ -114,6 +114,7 @@ var storeErrors = []storeError{
 	{store.ErrQuota, httpError{http.StatusForbidden, "quota_exceeded"}},
 	{store.ErrUnauthorized, httpError{http.StatusUnauthorized, "unauthorized"}},
 	{store.ErrTooLarge, errTooLarge},
+	{store.ErrRotatePending, httpError{http.StatusConflict, "rotate_pending"}},
 }
 
 // handle writes the error a handler returns; only unexpected ones are logged.

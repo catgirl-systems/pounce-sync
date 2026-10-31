@@ -40,9 +40,14 @@ func (a *api) getRoster(w http.ResponseWriter, r *http.Request, s *store.Session
 	return reply(w, http.StatusOK, rosterResponse{out, head})
 }
 
-type appendRosterRequest struct {
+type signedEntry struct {
 	Entry b64 `json:"entry"`
 	Sig   b64 `json:"sig"`
+}
+
+type appendRosterRequest struct {
+	Entries []signedEntry `json:"entries"`
+	Keys    []wrappedKey  `json:"keys"`
 }
 
 func (a *api) postRoster(w http.ResponseWriter, r *http.Request, s *store.Session) error {
@@ -55,17 +60,28 @@ func (a *api) postRoster(w http.ResponseWriter, r *http.Request, s *store.Sessio
 	if err := decode(w, r, bodyLimit, &req); err != nil {
 		return err
 	}
-	if !ok {
+	if !ok || len(req.Entries) < 1 || len(req.Entries) > maxRosterBatch || len(req.Keys) > maxRosterBatch {
 		return errBadRequest
 	}
-	head, err := a.st.AppendRoster(r.Context(), s.AccountID, expect, req.Entry, req.Sig)
+	entries := make([]store.SignedEntry, len(req.Entries))
+	for i, e := range req.Entries {
+		entries[i] = store.SignedEntry{Entry: e.Entry, Sig: e.Sig}
+	}
+	keys := make([]store.WrappedKey, len(req.Keys))
+	for i, k := range req.Keys {
+		if err := sized(k.Blob, maxKeyBlob); err != nil {
+			return err
+		}
+		keys[i] = store.WrappedKey{RecipientID: k.RecipientID, Epoch: k.Epoch, Blob: k.Blob, SignerID: k.SignerID, Sig: k.Sig}
+	}
+	head, err := a.st.AppendRoster(r.Context(), s.AccountID, expect, entries, keys)
 	if errors.Is(err, store.ErrPrecondition) {
 		return reply(w, http.StatusPreconditionFailed, staleHeadResponse{"precondition_failed", head})
 	}
 	if err != nil {
 		return err
 	}
-	// wakes long-polls so a device removed by this entry gets its 401 at once.
+	// wakes long-polls so a device removed by these entries gets its 401 at once.
 	a.notify.wake(string(s.AccountID))
 	return reply(w, http.StatusOK, headBody{head})
 }

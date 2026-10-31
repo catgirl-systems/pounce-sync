@@ -26,6 +26,8 @@ const (
 	maxKeyBlob = 1 << 10
 	maxWait    = 30
 	heavySlots = 4
+	// every active device removed at once plus their rotate; also bounds the keys.
+	maxRosterBatch = 33
 )
 
 type api struct {

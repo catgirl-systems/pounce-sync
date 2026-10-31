@@ -43,10 +43,16 @@ func (s *Store) Batch(ctx context.Context, accountID, deviceID []byte, ws []Writ
 		// the join also checks the device is still active, as in devicePub.
 		var epoch uint32
 		var head uint64
-		err := tx.QueryRowContext(ctx, `SELECT a.epoch, a.head_seq FROM accounts a JOIN devices d ON d.account_id = a.id
-			WHERE a.id = ? AND d.device_id = ? AND d.kind = 'device' AND d.active = 1`, accountID, deviceID).Scan(&epoch, &head)
+		var pending bool
+		err := tx.QueryRowContext(ctx, `SELECT a.epoch, a.head_seq, a.rotate_pending FROM accounts a JOIN devices d ON d.account_id = a.id
+			WHERE a.id = ? AND d.device_id = ? AND d.kind = 'device' AND d.active = 1`, accountID, deviceID).Scan(&epoch, &head, &pending)
 		if err != nil {
 			return notFound(err, ErrUnauthorized)
+		}
+		// a removed device still knows the current epoch's key, so nothing new is
+		// written under it. only rosters appended before atomic rotation get here.
+		if pending {
+			return ErrRotatePending
 		}
 		creates := 0
 		for _, w := range ws {

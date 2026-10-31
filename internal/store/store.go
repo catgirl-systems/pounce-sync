@@ -15,14 +15,15 @@ import (
 )
 
 var (
-	ErrNotFound     = errors.New("not found")
-	ErrConflict     = errors.New("conflict")
-	ErrPrecondition = errors.New("precondition failed")
-	ErrInvalid      = errors.New("invalid entry")
-	ErrForbidden    = errors.New("forbidden")
-	ErrQuota        = errors.New("quota exceeded")
-	ErrUnauthorized = errors.New("unauthorized")
-	ErrTooLarge     = errors.New("too large")
+	ErrNotFound      = errors.New("not found")
+	ErrConflict      = errors.New("conflict")
+	ErrPrecondition  = errors.New("precondition failed")
+	ErrInvalid       = errors.New("invalid entry")
+	ErrForbidden     = errors.New("forbidden")
+	ErrQuota         = errors.New("quota exceeded")
+	ErrUnauthorized  = errors.New("unauthorized")
+	ErrTooLarge      = errors.New("too large")
+	ErrRotatePending = errors.New("rotate pending")
 )
 
 const (
